@@ -1,0 +1,240 @@
+@page "/messaging"
+@rendermode InteractiveServer
+@inject IJSRuntime JSRuntime
+@inject NavigationManager NavigationManager
+@inject MessagingApp.Services.ConversationService ConversationService
+
+<PageTitle>Chat - @userName</PageTitle>
+
+@if (string.IsNullOrEmpty(userName))
+{
+    <div class="messaging-error">
+        <div class="error-card">
+            <h2>No Name Provided</h2>
+            <p>Please enter your name to access the chat.</p>
+            <button class="btn btn-primary" @onclick="GoToUserName">
+                Enter Name
+            </button>
+        </div>
+    </div>
+}
+else
+{
+    <div class="messaging-container">
+        <div class="chat-header">
+            <div class="user-info">
+                <div class="user-avatar">
+                    @userName.Substring(0, 1).ToUpper()
+                </div>
+                <div class="user-details">
+                    <h3>@userName</h3>
+                    <span class="status">Online</span>
+                </div>
+            </div>
+            <button class="btn btn-outline-secondary btn-sm" @onclick="ClearChat">
+                Clear Chat
+            </button>
+        </div>
+
+        <div class="chat-messages" @ref="messagesContainer">
+            @if (messages.Count == 0)
+            {
+                <div class="welcome-message">
+                    <div class="welcome-icon">💬</div>
+                    <h4>Welcome to the chat, @userName!</h4>
+                    <p>Start typing a message below to begin chatting.</p>
+                </div>
+            }
+            else
+            {
+                @foreach (var message in messages)
+                {
+                    <div class="message @(message.IsFromUser ? "user-message" : "server-message")">
+                        <div class="message-content">
+                            <div class="message-header">
+                                <span class="sender">@(message.IsFromUser? userName : "Server")</span>
+                                <span class="timestamp">@message.Timestamp.ToString("HH:mm")</span>
+                            </div>
+                            <div class="message-text">@message.Text</div>
+                        </div>
+                    </div>
+                }
+            }
+        </div>
+
+        <div class="chat-input-container">
+            <EditForm Model="@messageModel" OnValidSubmit="@SendMessage">
+                <div class="input-group">
+                    <InputText @bind-Value="messageModel.Text" class="form-control chat-input"
+                        placeholder="Type your message..." maxlength="500"
+                        @onkeypress="@(async (e) => { if (e.Key == "Enter" && !e.ShiftKey) { await SendMessage(); } })" />
+                    <button type="submit" class="btn btn-primary send-button" disabled="@isSending">
+                        @if (isSending)
+                        {
+                            <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span>
+                        }
+                        else
+                        {
+                            <span>Send</span>
+                        }
+                    </button>
+                </div>
+            </EditForm>
+        </div>
+    </div>
+}
+
+@code {
+    [SupplyParameterFromQuery]
+    public string? Name { get; set; }
+
+    [SupplyParameterFromQuery]
+    public string? ConversationId { get; set; }
+
+    private string userName = string.Empty;
+    private string currentConversationId = string.Empty;
+    private List<ChatMessage> messages = new();
+    private MessageModel messageModel = new();
+    private bool isSending = false;
+    private ElementReference messagesContainer;
+
+    protected override async Task OnInitializedAsync()
+    {
+        userName = Name ?? string.Empty;
+        currentConversationId = ConversationId ?? string.Empty;
+
+        if (!string.IsNullOrEmpty(userName))
+        {
+            await LoadConversation();
+        }
+    }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        // Check if conversation ID has changed
+        var newConversationId = ConversationId ?? string.Empty;
+
+        if (newConversationId != currentConversationId)
+        {
+            currentConversationId = newConversationId;
+            await LoadConversation();
+        }
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (firstRender)
+        {
+            await ScrollToBottom();
+        }
+    }
+
+    private async Task SendMessage()
+    {
+        if (string.IsNullOrWhiteSpace(messageModel.Text) || isSending)
+            return;
+
+        // Get or create conversation
+        var conversation = ConversationService.CreateOrGetConversation(userName);
+        currentConversationId = conversation.Id;
+
+        // Add user message to conversation
+        ConversationService.AddMessage(currentConversationId, messageModel.Text.Trim(), true);
+
+        var userMessage = new ChatMessage
+        {
+            Text = messageModel.Text.Trim(),
+            IsFromUser = true,
+            Timestamp = DateTime.Now
+        };
+
+        messages.Add(userMessage);
+        messageModel.Text = string.Empty;
+        isSending = true;
+
+        StateHasChanged();
+        await ScrollToBottom();
+
+        // Simulate server response with random UUID
+        await Task.Delay(1000 + Random.Shared.Next(500, 1500)); // Random delay 1-2.5 seconds
+
+        var serverResponse = Guid.NewGuid().ToString();
+        ConversationService.AddMessage(currentConversationId, serverResponse, false);
+
+        var serverMessage = new ChatMessage
+        {
+            Text = serverResponse,
+            IsFromUser = false,
+            Timestamp = DateTime.Now
+        };
+
+        messages.Add(serverMessage);
+        isSending = false;
+
+        StateHasChanged();
+        await ScrollToBottom();
+    }
+
+    private async Task LoadConversation()
+    {
+        messages.Clear();
+
+        if (!string.IsNullOrEmpty(currentConversationId))
+        {
+            var conversation = ConversationService.GetConversation(currentConversationId);
+
+            if (conversation != null)
+            {
+                messages = conversation.Messages.Select(m => new ChatMessage
+                {
+                    Text = m.Text,
+                    IsFromUser = m.IsFromUser,
+                    Timestamp = m.Timestamp
+                }).ToList();
+            }
+        }
+
+        StateHasChanged();
+        await ScrollToBottom();
+    }
+
+    private async Task ScrollToBottom()
+    {
+        try
+        {
+            await JSRuntime.InvokeVoidAsync("scrollToBottom", messagesContainer);
+        }
+        catch
+        {
+            // Ignore JS errors
+        }
+    }
+
+    private void ClearChat()
+    {
+        if (!string.IsNullOrEmpty(currentConversationId))
+        {
+            ConversationService.DeleteConversation(currentConversationId);
+        }
+        messages.Clear();
+        currentConversationId = string.Empty;
+        StateHasChanged();
+    }
+
+    private void GoToUserName()
+    {
+        NavigationManager.NavigateTo("/username");
+    }
+
+    public class MessageModel
+    {
+        public string Text { get; set; } = string.Empty;
+    }
+
+    public class ChatMessage
+    {
+        public string Text { get; set; } = string.Empty;
+        public bool IsFromUser { get; set; }
+        public DateTime Timestamp { get; set; }
+    }
+}

@@ -1,0 +1,41 @@
+﻿@page "/"
+@rendermode InteractiveServer
+@inject NavigationManager NavigationManager
+
+<PageTitle>Home</PageTitle>
+
+<div class="home-container">
+    <div class="home-content">
+        <h1 class="home-title">Welcome to ChatApp</h1>
+        <p class="home-subtitle">A modern real-time messaging application</p>
+
+        <div class="home-features">
+            <div class="feature">
+                <div class="feature-icon">💬</div>
+                <h3>Real-time Chat</h3>
+                <p>Send and receive messages instantly</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">🎨</div>
+                <h3>Modern Design</h3>
+                <p>Beautiful and intuitive user interface</p>
+            </div>
+            <div class="feature">
+                <div class="feature-icon">⚡</div>
+                <h3>Fast & Responsive</h3>
+                <p>Built with Blazor Server for optimal performance</p>
+            </div>
+        </div>
+
+        <button class="btn btn-primary btn-lg home-cta" @onclick="StartChatting">
+            Start Chatting Now
+        </button>
+    </div>
+</div>
+
+@code {
+    private void StartChatting()
+    {
+        NavigationManager.NavigateTo("/username");
+    }
+}

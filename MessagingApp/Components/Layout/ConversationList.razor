@@ -1,0 +1,236 @@
+@inject MessagingApp.Services.ConversationService ConversationService
+@inject NavigationManager NavigationManager
+@inject IJSRuntime JSRuntime
+@rendermode InteractiveServer
+
+<div class="conversation-list">
+    <div class="conversation-header">
+        <h5>Conversations</h5>
+        <button class="btn btn-sm btn-outline-primary" @onclick="StartNewConversation">
+            <span class="bi bi-plus-circle"></span> New
+        </button>
+    </div>
+
+    <div class="conversation-items">
+        @if (conversations.Count == 0)
+        {
+            <div class="no-conversations">
+                <p>No conversations yet</p>
+                <small>Start a new conversation to begin chatting</small>
+            </div>
+        }
+        else
+        {
+            @foreach (var conversation in conversations)
+            {
+                <div class="conversation-item @(IsActiveConversation(conversation.Id) ? "active" : "")"
+                     @onclick="() => SelectConversation(conversation)">
+                    <div class="conversation-title">@conversation.Title</div>
+                    <div class="conversation-meta">
+                        <span class="conversation-user">@conversation.UserName</span>
+                        <span class="conversation-time">@FormatTime(conversation.LastMessageAt)</span>
+                    </div>
+                    <div class="conversation-preview">
+                        @GetLastMessagePreview(conversation)
+                    </div>
+                </div>
+            }
+        }
+    </div>
+</div>
+
+@code {
+    private List<MessagingApp.Models.Conversation> conversations = new();
+    private string? currentConversationId;
+
+    protected override void OnInitialized()
+    {
+        // Subscribe for real-time updates
+        ConversationService.ConversationsChanged += OnConversationsChanged;
+        LoadConversations();
+    }
+
+    protected override void OnParametersSet()
+    {
+        LoadConversations();
+    }
+
+    private void OnConversationsChanged()
+    {
+        // Ensure UI update happens on the correct sync context
+        InvokeAsync(() => LoadConversations());
+    }
+
+    private void LoadConversations()
+    {
+        conversations = ConversationService.GetAllConversations();
+        StateHasChanged();
+    }
+
+    private void SelectConversation(MessagingApp.Models.Conversation conversation)
+    {
+        currentConversationId = conversation.Id;
+        var url = $"/messaging?name={Uri.EscapeDataString(conversation.UserName)}&conversationId={conversation.Id}";
+        NavigationManager.NavigateTo(url);
+    }
+
+    private void StartNewConversation()
+    {
+        NavigationManager.NavigateTo("/username");
+    }
+
+    private bool IsActiveConversation(string conversationId)
+    {
+        return currentConversationId == conversationId;
+    }
+
+    private string FormatTime(DateTime dateTime)
+    {
+        var now = DateTime.Now;
+        var diff = now - dateTime;
+
+        if (diff.TotalMinutes < 1)
+            return "Just now";
+        else if (diff.TotalMinutes < 60)
+            return $"{(int)diff.TotalMinutes}m ago";
+        else if (diff.TotalHours < 24)
+            return $"{(int)diff.TotalHours}h ago";
+        else if (diff.TotalDays < 7)
+            return $"{(int)diff.TotalDays}d ago";
+        else
+            return dateTime.ToString("MMM dd");
+    }
+
+    private string GetLastMessagePreview(MessagingApp.Models.Conversation conversation)
+    {
+        var lastMessage = conversation.Messages.LastOrDefault();
+        if (lastMessage == null)
+            return "No messages yet";
+
+        var preview = lastMessage.Text;
+        if (preview.Length > 50)
+            preview = preview.Substring(0, 50) + "...";
+
+        return preview;
+    }
+
+    public void Dispose()
+    {
+        ConversationService.ConversationsChanged -= OnConversationsChanged;
+    }
+}
+
+<style>
+    .conversation-list {
+        padding: 15px;
+        display: flex;
+        flex-direction: column;
+        max-height: 400px;
+    }
+
+    .conversation-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 15px;
+        padding-bottom: 10px;
+        border-bottom: 1px solid #e1e8ed;
+    }
+
+        .conversation-header h5 {
+            margin: 0;
+            color: #2c3e50;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+
+    .conversation-items {
+        flex: 1;
+        overflow-y: auto;
+    }
+
+    .conversation-item {
+        padding: 12px;
+        margin-bottom: 8px;
+        border-radius: 8px;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border: 1px solid transparent;
+        background: #f8f9fa;
+    }
+
+        .conversation-item:hover {
+            background: #e9ecef;
+            transform: translateY(-1px);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .conversation-item.active {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+            border-color: #667eea;
+        }
+
+    .conversation-title {
+        font-weight: 600;
+        font-size: 0.85rem;
+        margin-bottom: 4px;
+        line-height: 1.2;
+    }
+
+    .conversation-meta {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 6px;
+        font-size: 0.75rem;
+        opacity: 0.8;
+    }
+
+    .conversation-user {
+        font-weight: 500;
+    }
+
+    .conversation-time {
+        font-size: 0.75rem;
+    }
+
+    .conversation-preview {
+        font-size: 0.75rem;
+        opacity: 0.7;
+        line-height: 1.2;
+    }
+
+    .no-conversations {
+        text-align: center;
+        padding: 20px 10px;
+        color: #7f8c8d;
+    }
+
+        .no-conversations p {
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        .no-conversations small {
+            font-size: 0.8rem;
+        }
+
+    .conversation-items::-webkit-scrollbar {
+        width: 4px;
+    }
+
+    .conversation-items::-webkit-scrollbar-track {
+        background: #f1f1f1;
+        border-radius: 2px;
+    }
+
+    .conversation-items::-webkit-scrollbar-thumb {
+        background: #c1c1c1;
+        border-radius: 2px;
+    }
+
+        .conversation-items::-webkit-scrollbar-thumb:hover {
+            background: #a8a8a8;
+        }
+</style>

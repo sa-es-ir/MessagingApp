@@ -1,0 +1,68 @@
+@page "/username"
+@rendermode InteractiveServer
+@inject NavigationManager NavigationManager
+
+<PageTitle>Enter Your Name</PageTitle>
+
+<div class="username-container">
+    <div class="username-card">
+        <div class="username-header">
+            <h1 class="username-title">Welcome to ChatApp</h1>
+            <p class="username-subtitle">Enter your name to start messaging</p>
+        </div>
+
+        <div class="username-form">
+            <EditForm Model="@userNameModel" OnValidSubmit="@OnSubmit">
+                <DataAnnotationsValidator />
+
+                <div class="form-group">
+                    <InputText @bind-Value="userNameModel.Name" class="form-control username-input"
+                        placeholder="Enter your name" maxlength="50" />
+                    <ValidationMessage For="@(() => userNameModel.Name)" class="validation-message" />
+                </div>
+
+                <button type="submit" class="btn btn-primary username-submit" disabled="@isSubmitting">
+                    @if (isSubmitting)
+                    {
+                        <span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span>
+                        <span>Joining...</span>
+                    }
+                    else
+                    {
+                        <span>Start Chatting</span>
+                    }
+                </button>
+            </EditForm>
+        </div>
+
+        <div class="username-footer">
+            <small class="text-muted">Your name will be visible to other users in the chat</small>
+        </div>
+    </div>
+</div>
+
+@code {
+    private UserNameModel userNameModel = new();
+    private bool isSubmitting = false;
+
+    private async Task OnSubmit()
+    {
+        if (string.IsNullOrWhiteSpace(userNameModel.Name))
+            return;
+
+        isSubmitting = true;
+
+        // Store the user name in session/localStorage and navigate to chat
+        await Task.Delay(500); // Simulate processing
+
+        // Navigate to messaging page with user name
+        NavigationManager.NavigateTo($"/messaging?name={Uri.EscapeDataString(userNameModel.Name.Trim())}");
+    }
+
+    public class UserNameModel
+    {
+        [Required(ErrorMessage = "Please enter your name")]
+        [StringLength(50, MinimumLength = 2, ErrorMessage = "Name must be between 2 and 50 characters")]
+        public string Name { get; set; } = string.Empty;
+    }
+}
