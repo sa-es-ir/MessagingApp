@@ -122,8 +122,8 @@ public class ConversationService(AzureOpenAIClient azureOpenAIClient,
                     }
                 }
             }
-
-            logger.LogError("AI run failed with status: {Status} for threadId: {threadId}", run.Value.Status, conversation.ThreadId);
+            else
+                logger.LogError("AI run failed with status: {Status} for threadId: {threadId}", run.Value.Status, conversation.ThreadId);
 
         }
 
