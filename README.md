@@ -134,7 +134,7 @@ Both services implement `IConversationService`. To switch:
 - Use **Assistants API** (legacy):
 
   ```csharp
-  builder.Services.AddSingleton<IConversationService, ConversationService>();
+  builder.Services.AddSingleton<IConversationService, ConversationWithAssistantService>();
   ```
 
 No UI changes are required; the Blazor components continue to use `IConversationService`.

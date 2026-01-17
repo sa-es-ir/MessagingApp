@@ -6,9 +6,9 @@ using OpenAI.Assistants;
 namespace MessagingApp.Services;
 #pragma warning disable OPENAI001
 
-public class ConversationService(AzureOpenAIClient azureOpenAIClient,
+public class ConversationWithAssistantService(AzureOpenAIClient azureOpenAIClient,
     IOptions<AssistantOptions> assistantOptions,
-    ILogger<ConversationService> logger) : IConversationService
+    ILogger<ConversationWithAssistantService> logger) : IConversationService
 {
     private readonly List<Conversation> _conversations = new();
     private readonly object _lock = new();

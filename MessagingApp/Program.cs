@@ -15,6 +15,7 @@ var aiApiKey = builder.Configuration["AzureOpenAI:ApiKey"];
 
 builder.Services.AddSingleton(_ => new AzureOpenAIClient(new Uri(aiEndPoint!), new ApiKeyCredential(aiApiKey!)));
 builder.Services.AddSingleton<IConversationService, ConversationWithResponsesAPIService>();
+//builder.Services.AddSingleton<IConversationService, ConversationWithAssistantService>();
 builder.Services.Configure<AssistantOptions>(builder.Configuration.GetSection("AzureOpenAI"));
 
 
