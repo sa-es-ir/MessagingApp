@@ -1,9 +1,11 @@
 # MessagingApp with Azure OpenAI (Responses API + Assistants)
 
+![conversation_image](MessagingApp_conversations.png)
+
 This repo is a Blazor Server chat app that shows two ways to talk to Azure OpenAI:
 
-1. **Responses API** – stateful, recommended (new)
-2. **Assistants API** – legacy (will be deprecated), kept for comparison
+1. **Responses API** â€“ stateful, recommended (new)
+2. **Assistants API** â€“ legacy (will be deprecated), kept for comparison
 
 Both implementations plug into the same `IConversationService` interface, so you can switch between them just by changing DI in `Program.cs`.
 
@@ -59,7 +61,7 @@ This uses the latest Responses API surface (`OpenAI.Responses` types) instead of
 
 ---
 
-## Assistants API (legacy – will be deprecated)
+## Assistants API (legacy â€“ will be deprecated)
 
 `ConversationService` uses the older **Assistants API** via threads, messages, and runs. This API is expected to be deprecated in favor of Responses and is kept only for learning and migration.
 
