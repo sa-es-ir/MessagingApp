@@ -84,7 +84,7 @@ public class ConversationService(AzureOpenAIClient azureOpenAIClient,
                 conversation.Title = text.Length > 50 ? text.Substring(0, 50) + "..." : text;
             }
 
-            await _assistantClient.CreateMessageAsync(conversation.ThreadId, MessageRole.User,
+            var result = await _assistantClient.CreateMessageAsync(conversation.ThreadId, MessageRole.User,
                [MessageContent.FromText(text)]);
         }
         else
@@ -116,6 +116,7 @@ public class ConversationService(AzureOpenAIClient azureOpenAIClient,
                             };
                             conversation.Messages.Add(assistantResponseMessage);
                             conversation.LastMessageAt = DateTime.Now;
+                            await _assistantClient.DeleteMessageAsync(conversation.ThreadId, assistantMessage.Id);
                             changed = true;
                         }
                         break;
