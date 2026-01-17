@@ -8,7 +8,7 @@ namespace MessagingApp.Services;
 
 public class ConversationService(AzureOpenAIClient azureOpenAIClient,
     IOptions<AssistantOptions> assistantOptions,
-    ILogger<ConversationService> logger)
+    ILogger<ConversationService> logger) : IConversationService
 {
     private readonly List<Conversation> _conversations = new();
     private readonly object _lock = new();
@@ -37,6 +37,7 @@ public class ConversationService(AzureOpenAIClient azureOpenAIClient,
 
     public async Task<Conversation> CreateOrGetConversationAsync(string userName)
     {
+
         bool created = false;
         Conversation? conversation;
         var existingConversation = _conversations.FirstOrDefault(c => c.UserName == userName);
@@ -116,7 +117,7 @@ public class ConversationService(AzureOpenAIClient azureOpenAIClient,
                             };
                             conversation.Messages.Add(assistantResponseMessage);
                             conversation.LastMessageAt = DateTime.Now;
-                            await _assistantClient.DeleteMessageAsync(conversation.ThreadId, assistantMessage.Id);
+                            //await _assistantClient.DeleteMessageAsync(conversation.ThreadId, assistantMessage.Id);
                             changed = true;
                         }
                         break;
