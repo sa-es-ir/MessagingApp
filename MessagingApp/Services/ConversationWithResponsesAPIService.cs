@@ -114,9 +114,9 @@ public class ConversationWithResponsesAPIService : IConversationService
                     Instructions = "You are an AI assistant that only talks about food based on the user's mood. remember what the user mood before and offer him again if they ask. remember personal user info like name if they put"
                 };
 
-                if (!string.IsNullOrEmpty(conversation.ThreadId))
+                if (!string.IsNullOrEmpty(conversation.PreviousResponseId))
                 {
-                    options.PreviousResponseId = conversation.ThreadId;
+                    options.PreviousResponseId = conversation.PreviousResponseId;
                 }
 
                 var response = await _responsesClient.CreateResponseAsync(items, options);
@@ -138,7 +138,7 @@ public class ConversationWithResponsesAPIService : IConversationService
                     conversation.LastMessageAt = DateTime.Now;
 
                     // Persist last response id for stateful chaining via previous_response_id
-                    conversation.ThreadId = responseId;
+                    conversation.PreviousResponseId = responseId;
                     changed = true;
                 }
             }

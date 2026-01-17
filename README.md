@@ -33,9 +33,9 @@ var options = new ResponseCreationOptions
     Instructions = "You are an AI assistant that only talks about food based on the user's mood."
 };
 
-if (!string.IsNullOrEmpty(conversation.ThreadId))
+if (!string.IsNullOrEmpty(conversation.PreviousResponseId))
 {
-    options.PreviousResponseId = conversation.ThreadId; // stateful chaining
+    options.PreviousResponseId = conversation.PreviousResponseId; // stateful chaining
 }
 
 var response = await _responsesClient.CreateResponseAsync(items, options);
@@ -53,7 +53,7 @@ if (!string.IsNullOrEmpty(assistantText))
     });
 
     conversation.LastMessageAt = DateTime.Now;
-    conversation.ThreadId = responseId; // save for the next turn
+    conversation.PreviousResponseId = responseId; // save for the next turn
 }
 ```
 
