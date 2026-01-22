@@ -13,7 +13,6 @@ public class ConversationWithResponsesAPIService : IConversationService
     private readonly OpenAIResponseClient _responsesClient;
     private readonly ILogger<ConversationWithResponsesAPIService> _logger;
 
-    // Event raised whenever conversations list or a conversation's metadata changes
     public event Action? ConversationsChanged;
     private void RaiseChanged() => ConversationsChanged?.Invoke();
 

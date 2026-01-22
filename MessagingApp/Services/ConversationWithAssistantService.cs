@@ -117,7 +117,6 @@ public class ConversationWithAssistantService(AzureOpenAIClient azureOpenAIClien
                             };
                             conversation.Messages.Add(assistantResponseMessage);
                             conversation.LastMessageAt = DateTime.Now;
-                            //await _assistantClient.DeleteMessageAsync(conversation.ThreadId, assistantMessage.Id);
                             changed = true;
                         }
                         break;
